@@ -1,0 +1,87 @@
+// Barómetro Nacional - Prisma Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Proyecto {
+  id                String      @id
+  nombre            String
+  socioLocal        String
+  sede              String
+  municipio         String
+  comunidad         String
+  fechaInicio       String
+  fechaFin          String?
+  numBeneficiarios  Int
+  tipoBeneficiario  String
+  responsableFRM    String
+  observaciones     String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  puntuaciones      Puntuacion[]
+  historial         CambioHistorial[]
+
+  @@index([municipio])
+  @@index([responsableFRM])
+  @@index([createdAt])
+}
+
+model Criterio {
+  id          String        @id
+  eje         String        // "alcance" | "carga"
+  orden       Int
+  nombre      String
+  definicion  String
+  ejemplos    Json          // Array de { nivel: 0|1|2|3, texto: string }
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  puntuaciones Puntuacion[]
+
+  @@index([eje])
+  @@index([orden])
+}
+
+model Actividad {
+  id                    String    @id
+  codigo                String    @unique
+  texto                 String
+  categoriaEstrategica  String    // "I" | "II" | "III"
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([categoriaEstrategica])
+}
+
+model Puntuacion {
+  id          String    @id @default(cuid())
+  proyectoId  String
+  proyecto    Proyecto  @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  criterioId  String
+  criterio    Criterio  @relation(fields: [criterioId], references: [id], onDelete: Cascade)
+  valor       Int       // 0 | 1 | 2 | 3
+  nota        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([proyectoId, criterioId])
+  @@index([proyectoId])
+  @@index([criterioId])
+}
+
+model CambioHistorial {
+  id          String    @id @default(cuid())
+  proyectoId  String
+  proyecto    Proyecto  @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  tipo        String    // "creacion" | "edicion_datos" | "evaluacion" | "eliminacion"
+  cambios     Json?     // Record<string, { antes: any; despues: any }>
+  timestamp   DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  @@index([proyectoId])
+  @@index([timestamp])
+}
