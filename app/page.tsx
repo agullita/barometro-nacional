@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, X } from "lucide-react";
+import { Plus, X, RefreshCw } from "lucide-react";
 import { useEstadoGlobal } from "@/lib/storage";
 import { ProyectoCard } from "@/components/ProyectoCard";
 import { Cuadrante } from "@/components/Cuadrante";
@@ -13,13 +13,14 @@ import { clsx } from "clsx";
 type Filtro = "todos" | "I" | "II" | "III" | "sin-evaluar";
 
 export default function HomePage() {
-  const { estado, setEstado } = useEstadoGlobal();
+  const { estado, setEstado, recargarDesdeBD } = useEstadoGlobal();
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busqueda, setBusqueda] = useState("");
   const [municipioFiltro, setMunicipioFiltro] = useState("");
   const [socioFiltro, setSocioFiltro] = useState("");
   const [responsableFiltro, setResponsableFiltro] = useState("");
   const [mostrarFiltrosAvanzados, setMostrarFiltrosAvanzados] = useState(false);
+  const [recargando, setRecargando] = useState(false);
 
   if (!estado) {
     return <div className="text-slate-500">Cargando</div>;
@@ -78,6 +79,18 @@ export default function HomePage() {
           </p>
         </div>
         <div className="flex gap-3">
+          <button
+            onClick={async () => {
+              setRecargando(true);
+              await recargarDesdeBD();
+              setRecargando(false);
+            }}
+            disabled={recargando}
+            className="inline-flex items-center gap-2 bg-slate-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-600 transition disabled:opacity-50"
+          >
+            <RefreshCw size={18} className={recargando ? "animate-spin" : ""} />
+            {recargando ? "Recargando..." : "Recargar"}
+          </button>
           {proyectos.length > 0 && (
             <ExportButton
               label="Exportar cartera"

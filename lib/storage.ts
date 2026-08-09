@@ -96,7 +96,26 @@ export function useEstadoGlobal() {
     [estado]
   );
 
-  return { estado: loading ? null : estado, setEstado };
+  // Función para recargar desde BD
+  const recargarDesdeBD = useCallback(async () => {
+    try {
+      const response = await fetch("/api/load");
+      if (response.ok) {
+        const data = await response.json();
+        setEstadoLocal({
+          proyectos: data.proyectos || [],
+          criterios: data.criterios?.length ? data.criterios : CRITERIOS_INICIALES,
+          actividades: data.actividades?.length ? data.actividades : ACTIVIDADES_INICIALES,
+        });
+        // Cache en localStorage
+        localStorage.setItem(KEY, JSON.stringify(data));
+      }
+    } catch (error) {
+      console.error("Error recargando desde BD:", error);
+    }
+  }, []);
+
+  return { estado: loading ? null : estado, setEstado, recargarDesdeBD };
 }
 
 export type { Proyecto, Criterio, Actividad };
