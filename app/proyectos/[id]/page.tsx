@@ -6,6 +6,7 @@ import { resumenCategorias } from "@/lib/calculo";
 import { CriterioForm } from "@/components/CriterioForm";
 import { BadgeCategoria } from "@/components/BadgeCategoria";
 import { ExportButton } from "@/components/ExportButton";
+import { Toast } from "@/components/Toast";
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, Save, X, FileText, Clock } from "lucide-react";
@@ -26,6 +27,8 @@ export default function ProyectoPage() {
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState(proyecto ? { ...proyecto } : null);
   const [tabActual, setTabActual] = useState<"datos" | "evaluacion" | "historial">("datos");
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [guardando, setGuardando] = useState(false);
 
   if (!estado || !proyecto) {
     return (
@@ -132,6 +135,7 @@ export default function ProyectoPage() {
   }
 
   return (
+    <>
     <div id="proyecto-export-content" className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
@@ -382,18 +386,44 @@ export default function ProyectoPage() {
           {/* Botón Guardar */}
           <div className="flex gap-3 pt-6 border-t border-slate-200">
             <button
-              onClick={() => {
-                // Force sync to Neon
-                if (estado) {
-                  setEstado(estado);
+              onClick={async () => {
+                if (!estado) return;
+                setGuardando(true);
+                try {
+                  const response = await fetch("/api/sync", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(estado),
+                  });
+
+                  if (response.ok) {
+                    setToast({
+                      message: "✓ Evaluación guardada correctamente",
+                      type: "success",
+                    });
+                  } else {
+                    setToast({
+                      message: "Error al guardar. Intenta nuevamente.",
+                      type: "error",
+                    });
+                  }
+                } catch (error) {
+                  console.error("Error guardando:", error);
+                  setToast({
+                    message: "Error al guardar. Intenta nuevamente.",
+                    type: "error",
+                  });
+                } finally {
+                  setGuardando(false);
                 }
               }}
-              className="inline-flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition"
+              disabled={guardando}
+              className="inline-flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save size={18} />
-              Guardar evaluación
+              {guardando ? "Guardando..." : "Guardar evaluación"}
             </button>
-            <p className="text-xs text-slate-500 self-center">Los cambios se sincronizan automáticamente con la base de datos</p>
+            <p className="text-xs text-slate-500 self-center">Los cambios se guardan en la base de datos</p>
           </div>
         </div>
       )}
@@ -442,5 +472,13 @@ export default function ProyectoPage() {
         </div>
       )}
     </div>
+    {toast && (
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(null)}
+      />
+    )}
+    </>
   );
 }
