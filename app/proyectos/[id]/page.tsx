@@ -378,6 +378,23 @@ export default function ProyectoPage() {
               ))}
             </div>
           </div>
+
+          {/* Botón Guardar */}
+          <div className="flex gap-3 pt-6 border-t border-slate-200">
+            <button
+              onClick={() => {
+                // Force sync to Neon
+                if (estado) {
+                  setEstado(estado);
+                }
+              }}
+              className="inline-flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition"
+            >
+              <Save size={18} />
+              Guardar evaluación
+            </button>
+            <p className="text-xs text-slate-500 self-center">Los cambios se sincronizan automáticamente con la base de datos</p>
+          </div>
         </div>
       )}
 
